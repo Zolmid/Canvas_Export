@@ -32,7 +32,7 @@ A robust command-line tool for exporting Canvas LMS course content. It supports 
 
 If you are not a developer, you don't need to install Python. Just download the executable:
 
-1.  Go to the [**Releases**](/releases/latest) page.
+1.  Go to the [**Releases**](../../releases/latest) page.
 2.  Download the file matching your OS:
     * **Windows**: `CanvasDownloader-Windows.exe`
     * **macOS (Intel)**: `CanvasDownloader-MacOS-Intel`
@@ -135,7 +135,7 @@ This tool is for personal study backup and offline viewing only. Please comply w
 
 如果你不想配置代码环境，可以直接下载打包好的程序：
 
-1.  打开本仓库的 [**Releases**](/releases/latest) 页面。
+1.  打开本仓库的 [**Releases**](../../releases/latest) 页面。
 2.  在 `Assets` 列表下载与你的系统匹配的文件：
       * **Windows**: `CanvasDownloader-Windows.exe`
       * **macOS Intel**: `CanvasDownloader-MacOS-Intel`
