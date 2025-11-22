@@ -1,0 +1,121 @@
+name: Build and Publish Release
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - "v*"              
+  workflow_dispatch:       
+
+permissions:
+  contents: write          
+
+jobs:
+  # ==================================================
+  # 任务 1: 构建 Windows, Mac (Intel & Silicon), Linux (x64)
+  # ==================================================
+  build-standard:
+    name: Build ${{ matrix.os }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            arch: x64
+            target_name: CanvasDownloader-Windows.exe
+          
+          - os: ubuntu-latest
+            arch: x64
+            target_name: CanvasDownloader-Linux-x64
+            
+          - os: macos-13
+            arch: x86_64
+            target_name: CanvasDownloader-MacOS-Intel
+            
+          - os: macos-14
+            arch: arm64
+            target_name: CanvasDownloader-MacOS-Silicon
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        pip install canvasapi markdownify beautifulsoup4 rich requests pyinstaller
+        
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller --onefile --name "CanvasDownloader" export_canvas.py
+        
+    - name: Rename Output (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        mv dist/CanvasDownloader dist/${{ matrix.target_name }}
+        
+    - name: Rename Output (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        mv dist/CanvasDownloader.exe dist/${{ matrix.target_name }}
+        
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.target_name }}
+        path: dist/${{ matrix.target_name }}
+
+  # ==================================================
+  # 任务 2: 构建 Linux ARM64 (使用 QEMU)
+  # ==================================================
+  build-linux-arm:
+    name: Build Linux (ARM64)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      
+    - name: Build inside Docker
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/work -w /work --platform linux/arm64 python:3.10-slim /bin/sh -c "
+          apt-get update && apt-get install -y binutils && \
+          pip install --upgrade pip && \
+          pip install canvasapi markdownify beautifulsoup4 rich requests pyinstaller && \
+          pyinstaller --onefile --name CanvasDownloader-Linux-ARM64 export_canvas.py && \
+          chown -R $(id -u):$(id -g) dist"
+          
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: CanvasDownloader-Linux-ARM64
+        path: dist/CanvasDownloader-Linux-ARM64
+
+  # ==================================================
+  # 任务 3: 发布 Release (仅在推送 Tag 时运行)
+  # ==================================================
+  release:
+    name: Create GitHub Release
+    needs: [build-standard, build-linux-arm]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release_assets
+          merge-multiple: true
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release_assets/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false

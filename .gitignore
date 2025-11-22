@@ -1,0 +1,37 @@
+# 操作系统与编辑器杂项
+.DS_Store
+.AppleDouble
+._*
+Thumbs.db
+
+# Python 常规
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.pytest_cache/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# 构建与打包产物
+dist/
+build/
+.eggs/
+*.egg-info/
+
+# 导出结果（运行时生成）
+Canvas_Ultimate_Exports/
+
+# 工具缓存
+.tox/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+
+# 日志
+*.log
